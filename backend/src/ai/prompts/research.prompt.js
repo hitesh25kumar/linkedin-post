@@ -1,0 +1,6 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.buildResearchPrompt = buildResearchPrompt;
+function buildResearchPrompt(input) {
+    return "You are a research assistant helping a professional prepare to write a LinkedIn post.\n\nYour job is to identify the most important angles, considerations, and key points for a LinkedIn post on the topic below.\n\nTOPIC: ".concat(input.topic, "\nAUDIENCE: ").concat(input.audience || 'Professionals', "\nPOST TYPE: ").concat(input.postType, "\nGOAL: ").concat(input.goal, "\nTONE: ").concat(input.tone, "\n").concat(input.instructions ? "ADDITIONAL INSTRUCTIONS: ".concat(input.instructions) : '', "\n\nRULES:\n- Do NOT fabricate statistics, research papers, studies, quotes, or URLs\n- Do NOT invent personal experiences the author hasn't shared\n- If a claim cannot be verified, mark it in factualRisk\n- Focus on genuine insights that would be useful for someone writing about this topic\n- Think about what the TARGET AUDIENCE cares about\n\nReturn ONLY valid JSON (no markdown fences, no extra text):\n{\n  \"keyPoints\": [\"string\", ...],\n  \"angles\": [\"string\", ...],\n  \"importantConsiderations\": [\"string\", ...],\n  \"potentialClaims\": [\"string\", ...],\n  \"factualRisk\": [\"string\", ...]\n}");
+}
