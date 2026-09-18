@@ -54,6 +54,9 @@ export class GeminiProvider implements IAiProvider {
           throw new Error('AI rate limit reached. Please wait a moment and try again.');
         }
         if (error?.status === 401 || error?.status === 403) {
+          if (error?.message?.includes('ACCESS_TOKEN_TYPE_UNSUPPORTED')) {
+            throw new Error('GEMINI_API_KEY must be a Google AI Studio API key, not an OAuth access token.');
+          }
           throw new Error('Invalid Gemini API key. Please check your configuration.');
         }
         throw new Error(`AI generation failed: ${error?.message || 'Please check network and Gemini API key'}`);

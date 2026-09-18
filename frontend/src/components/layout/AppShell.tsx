@@ -10,11 +10,11 @@ export function AppShell() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadInitialData();
+    void loadInitialData();
   }, [loadInitialData]);
 
   useEffect(() => {
-    const user = localStorage.getItem('linkedin_agent_auth');
+    const user = localStorage.getItem('linkedin_agent_token');
     if (!user) {
       navigate('/login');
     }

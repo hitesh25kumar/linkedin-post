@@ -1,35 +1,43 @@
 import type { User } from '../types';
-import { mockUser } from '../data/mockData';
+import { api } from './api';
 
 const USER_STORAGE_KEY = 'linkedin_agent_user';
-const AUTH_STORAGE_KEY = 'linkedin_agent_auth';
+const TOKEN_STORAGE_KEY = 'linkedin_agent_token';
+
+interface AuthResponse {
+  token: string;
+  user: User;
+}
 
 export const authService = {
-  getUser: (): User | null => {
-    const isAuthenticated = localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!isAuthenticated) return null;
-
-    const data = localStorage.getItem(USER_STORAGE_KEY);
-    if (!data) {
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUser));
-      return mockUser;
+  getUser: async (): Promise<User | null> => {
+    if (!localStorage.getItem(TOKEN_STORAGE_KEY)) return null;
+    try {
+      const { data } = await api.get<User>('/auth/me');
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data));
+      return data;
+    } catch {
+      authService.logout();
+      return null;
     }
-    return JSON.parse(data);
   },
 
   login: async (email: string, password: string): Promise<User> => {
-    // Mock login delay
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log(`Logging in ${email} with password length ${password.length}`);
-        localStorage.setItem(AUTH_STORAGE_KEY, 'true');
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUser));
-        resolve(mockUser);
-      }, 1000);
-    });
+    const { data } = await api.post<AuthResponse>('/auth/login', { email, password });
+    localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+    return data.user;
+  },
+
+  register: async (name: string, email: string, password: string): Promise<User> => {
+    const { data } = await api.post<AuthResponse>('/auth/register', { name, email, password });
+    localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+    return data.user;
   },
 
   logout: () => {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
   }
 };

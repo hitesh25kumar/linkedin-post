@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, ServiceUnavailableException } from '@nestjs/common';
 import {
   AI_PROVIDER,
   IAiProvider,
@@ -30,23 +30,26 @@ export class AiService {
   async runFullPipeline(
     input: GeneratePostInput,
   ): Promise<GeneratePipelineResult> {
-    const context = await this.provider.researchTopic(input);
-    const draft = await this.provider.generatePost(input, context);
-    const critique = await this.provider.critiquePost(draft.content, input);
-    const improved = await this.provider.improvePost(
-      draft.content,
-      critique,
-      input,
-    );
+    try {
+      const context = await this.provider.researchTopic(input);
+      const draft = await this.provider.generatePost(input, context);
+      const critique = await this.provider.critiquePost(draft.content, input);
+      const improved = await this.provider.improvePost(draft.content, critique, input);
 
-    return {
-      context,
-      draftContent: draft.content,
-      draftTitle: draft.title,
-      critique,
-      improved,
-      isDemo: this.provider.isDemo(),
-    };
+      return {
+        context,
+        draftContent: draft.content,
+        draftTitle: draft.title,
+        critique,
+        improved,
+        isDemo: this.provider.isDemo(),
+      };
+    } catch (error) {
+      console.error('AI provider failed:', error);
+      throw new ServiceUnavailableException(
+        error instanceof Error ? error.message : 'AI provider is unavailable',
+      );
+    }
   }
 
   async critiquePost(

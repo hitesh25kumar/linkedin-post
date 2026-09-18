@@ -1,9 +1,9 @@
 import { useState } from 'react';
+import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
-import { useAppStore } from '../store';
 import { useToastStore } from '../store/toastStore';
-import { Sparkles, ArrowRight, Zap, Users, BarChart3, CheckCircle2, Eye } from 'lucide-react';
+import { Sparkles, ArrowRight, Zap, Users, BarChart3, Eye } from 'lucide-react';
 
 const FEATURES = [
   { icon: Zap, label: 'AI-Powered', desc: 'Gemini generates posts in seconds' },
@@ -17,7 +17,6 @@ export function Login() {
   const [showPass, setShowPass] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { loadInitialData } = useAppStore();
   const { addToast } = useToastStore();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -29,11 +28,13 @@ export function Login() {
     setIsLoading(true);
     try {
       await authService.login(email, password);
-      loadInitialData();
       addToast('success', 'Welcome back!');
       navigate('/dashboard');
-    } catch {
-      addToast('error', 'Login failed. Try any credentials.');
+    } catch (error) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.message || 'Invalid email or password'
+        : 'Login failed';
+      addToast('error', message);
     } finally {
       setIsLoading(false);
     }
@@ -163,15 +164,6 @@ export function Login() {
             <span className="text-xs text-gray-400">or</span>
             <div className="h-px flex-1 bg-gray-200" />
           </div>
-
-          {/* Mock quick login */}
-          <button
-            onClick={() => { setEmail('demo@example.com'); setPassword('password'); }}
-            className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium text-gray-700 border border-gray-200 bg-white hover:bg-gray-50 transition-all duration-150"
-          >
-            <CheckCircle2 className="w-4 h-4 text-green-500" />
-            Use demo credentials
-          </button>
 
           <p className="text-center text-sm text-gray-500 mt-6">
             No account?{' '}

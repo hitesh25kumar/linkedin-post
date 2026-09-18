@@ -23,18 +23,24 @@ let AiService = class AiService {
         return this.provider.isDemo();
     }
     async runFullPipeline(input) {
-        const context = await this.provider.researchTopic(input);
-        const draft = await this.provider.generatePost(input, context);
-        const critique = await this.provider.critiquePost(draft.content, input);
-        const improved = await this.provider.improvePost(draft.content, critique, input);
-        return {
-            context,
-            draftContent: draft.content,
-            draftTitle: draft.title,
-            critique,
-            improved,
-            isDemo: this.provider.isDemo(),
-        };
+        try {
+            const context = await this.provider.researchTopic(input);
+            const draft = await this.provider.generatePost(input, context);
+            const critique = await this.provider.critiquePost(draft.content, input);
+            const improved = await this.provider.improvePost(draft.content, critique, input);
+            return {
+                context,
+                draftContent: draft.content,
+                draftTitle: draft.title,
+                critique,
+                improved,
+                isDemo: this.provider.isDemo(),
+            };
+        }
+        catch (error) {
+            console.error('AI provider failed:', error);
+            throw new common_1.ServiceUnavailableException(error instanceof Error ? error.message : 'AI provider is unavailable');
+        }
     }
     async critiquePost(post, input) {
         return this.provider.critiquePost(post, input);

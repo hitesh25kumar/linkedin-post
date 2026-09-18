@@ -1,4 +1,5 @@
 import { ThumbsUp, MessageSquare, Repeat2, Send, Globe, MoreHorizontal } from 'lucide-react';
+import { useState } from 'react';
 import { useAppStore } from '../../store';
 
 interface LinkedInPreviewProps {
@@ -8,10 +9,11 @@ interface LinkedInPreviewProps {
 
 export function LinkedInPreview({ content, hashtags }: LinkedInPreviewProps) {
   const { user } = useAppStore();
+  const [isExpanded, setIsExpanded] = useState(false);
   if (!user) return null;
 
   const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2);
-  const previewText = content.slice(0, 300);
+  const previewText = isExpanded ? content : content.slice(0, 300);
   const isLong = content.length > 300;
 
   return (
@@ -56,8 +58,14 @@ export function LinkedInPreview({ content, hashtags }: LinkedInPreviewProps) {
           {previewText}
           {isLong && (
             <span>
-              {'... '}
-              <span className="text-[#0a66c2] font-semibold cursor-pointer hover:underline">see more</span>
+              {!isExpanded && '... '}
+              <button
+                type="button"
+                onClick={() => setIsExpanded((expanded) => !expanded)}
+                className="text-[#0a66c2] font-semibold hover:underline"
+              >
+                {isExpanded ? 'see less' : 'see more'}
+              </button>
             </span>
           )}
         </div>

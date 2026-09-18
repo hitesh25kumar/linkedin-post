@@ -4,12 +4,14 @@ import { Sparkles, Zap } from 'lucide-react';
 import { PostForm } from '../components/post/PostForm';
 import { GenerationProgress } from '../components/post/GenerationProgress';
 import { useAppStore } from '../store';
-import { mockPosts } from '../data/mockData';
+import { postService } from '../services/postService';
+import { useToastStore } from '../store/toastStore';
 
 export function CreatePost() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { createPost } = useAppStore();
+  const { refreshPosts } = useAppStore();
+  const { addToast } = useToastStore();
 
   const [topic, setTopic] = useState(location.state?.topic || '');
   const [audience, setAudience] = useState('Product Managers and Product Leaders');
@@ -20,27 +22,21 @@ export function CreatePost() {
   const [instructions, setInstructions] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setIsGenerating(true);
 
-    setTimeout(() => {
-      const newPost = {
-        topic, audience, tone,
-        type: postType, goal, length, instructions,
-        content: mockPosts[0].content,
-        hashtags: mockPosts[0].hashtags,
-        status: 'Draft' as const,
-        metrics: mockPosts[0].metrics,
-        analysis: mockPosts[0].analysis,
-      };
-
-      createPost(newPost);
-
-      setTimeout(() => {
-        const posts = JSON.parse(localStorage.getItem('linkedin_agent_posts') || '[]');
-        navigate(posts.length > 0 ? `/posts/${posts[0].id}` : '/posts');
-      }, 100);
-    }, 4500);
+    try {
+      const newPost = await postService.generatePost({
+        topic, audience, tone, postType, goal, length, instructions,
+      });
+      await refreshPosts();
+      navigate(`/posts/${newPost.id}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to generate post';
+      addToast('error', message);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (

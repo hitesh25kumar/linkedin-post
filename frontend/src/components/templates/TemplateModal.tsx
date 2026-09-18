@@ -21,18 +21,18 @@ export function TemplateModal({ isOpen, onClose }: TemplateModalProps) {
   const { createTemplate } = useAppStore();
   const { addToast } = useToastStore();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !description || !instructions) {
       addToast('error', 'Please fill in all fields');
       return;
     }
 
-    createTemplate({
-      name,
-      description,
-      instructions,
-      tone
-    });
+    try {
+      await createTemplate({ name, description, instructions, tone });
+    } catch {
+      addToast('error', 'Unable to create template');
+      return;
+    }
 
     addToast('success', 'Template created successfully');
     onClose();

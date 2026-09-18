@@ -32,11 +32,15 @@ export function PostTable({ posts, title, emptyMessage, showFilters = false }: P
     return matchesSearch && matchesStatus;
   });
 
-  const handleDelete = (e: React.MouseEvent, id: string) => {
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (window.confirm('Delete this post?')) {
-      deletePost(id);
-      addToast('success', 'Post deleted');
+      try {
+        await deletePost(id);
+        addToast('success', 'Post deleted');
+      } catch {
+        addToast('error', 'Unable to delete post');
+      }
     }
   };
 

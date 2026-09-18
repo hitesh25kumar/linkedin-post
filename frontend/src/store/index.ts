@@ -9,12 +9,13 @@ interface AppState {
   posts: Post[];
   templates: Template[];
   isAuthenticated: boolean;
-  loadInitialData: () => void;
+  loadInitialData: () => Promise<void>;
+  refreshPosts: () => Promise<void>;
   setUser: (user: User | null) => void;
-  createPost: (post: Omit<Post, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updatePost: (id: string, post: Partial<Post>) => void;
-  deletePost: (id: string) => void;
-  createTemplate: (template: Omit<Template, 'id'>) => void;
+  createPost: (post: Omit<Post, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updatePost: (id: string, post: Partial<Post>) => Promise<void>;
+  deletePost: (id: string) => Promise<void>;
+  createTemplate: (template: Omit<Template, 'id'>) => Promise<void>;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -23,32 +24,39 @@ export const useAppStore = create<AppState>((set) => ({
   templates: [],
   isAuthenticated: false,
   
-  loadInitialData: () => {
-    const user = authService.getUser();
-    const posts = postService.getPosts();
-    const templates = templateService.getTemplates();
+  loadInitialData: async () => {
+    const user = await authService.getUser();
+    if (!user) {
+      set({ user: null, posts: [], templates: [], isAuthenticated: false });
+      return;
+    }
+    const [posts, templates] = await Promise.all([
+      postService.getPosts(),
+      templateService.getTemplates(),
+    ]);
     set({ user, posts, templates, isAuthenticated: !!user });
   },
+  refreshPosts: async () => set({ posts: await postService.getPosts() }),
   
   setUser: (user) => set({ user, isAuthenticated: !!user }),
   
-  createPost: (postData) => {
-    postService.createPost(postData);
-    set({ posts: postService.getPosts() });
+  createPost: async (postData) => {
+    await postService.createPost(postData);
+    set({ posts: await postService.getPosts() });
   },
   
-  updatePost: (id, updatedPost) => {
-    postService.updatePost(id, updatedPost);
-    set({ posts: postService.getPosts() });
+  updatePost: async (id, updatedPost) => {
+    await postService.updatePost(id, updatedPost);
+    set({ posts: await postService.getPosts() });
   },
   
-  deletePost: (id) => {
-    postService.deletePost(id);
-    set({ posts: postService.getPosts() });
+  deletePost: async (id) => {
+    await postService.deletePost(id);
+    set({ posts: await postService.getPosts() });
   },
 
-  createTemplate: (templateData) => {
-    templateService.createTemplate(templateData);
-    set({ templates: templateService.getTemplates() });
+  createTemplate: async (templateData) => {
+    await templateService.createTemplate(templateData);
+    set({ templates: await templateService.getTemplates() });
   }
 }));

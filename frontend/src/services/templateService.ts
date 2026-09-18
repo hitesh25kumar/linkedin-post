@@ -1,26 +1,30 @@
 import type { Template } from '../types';
-import { mockTemplates } from '../data/mockData';
+import { api } from './api';
 
-const STORAGE_KEY = 'linkedin_agent_templates';
+interface ApiTemplate extends Template { _id?: string; }
+
+const toTemplate = (template: ApiTemplate): Template => ({
+  ...template,
+  id: template.id || template._id || '',
+});
 
 export const templateService = {
-  getTemplates: (): Template[] => {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(mockTemplates));
-      return mockTemplates;
-    }
-    return JSON.parse(data);
+  getTemplates: async (): Promise<Template[]> => {
+    const { data } = await api.get<ApiTemplate[]>('/templates');
+    return data.map(toTemplate);
   },
 
-  createTemplate: (template: Omit<Template, 'id'>): Template => {
-    const templates = templateService.getTemplates();
-    const newTemplate: Template = {
-      ...template,
-      id: `t-${Date.now()}`,
-    };
-    templates.push(newTemplate);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
-    return newTemplate;
-  }
+  createTemplate: async (template: Omit<Template, 'id'>): Promise<Template> => {
+    const { data } = await api.post<ApiTemplate>('/templates', template);
+    return toTemplate(data);
+  },
+
+  updateTemplate: async (id: string, updates: Partial<Template>): Promise<Template> => {
+    const { data } = await api.patch<ApiTemplate>(`/templates/${id}`, updates);
+    return toTemplate(data);
+  },
+
+  deleteTemplate: async (id: string): Promise<void> => {
+    await api.delete(`/templates/${id}`);
+  },
 };

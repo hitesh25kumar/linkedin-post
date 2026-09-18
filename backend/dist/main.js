@@ -7,8 +7,24 @@ const config_1 = require("@nestjs/config");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const configService = app.get(config_1.ConfigService);
+    const configuredOrigins = configService
+        .get('FRONTEND_URL', 'http://localhost:5173')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean);
+    const allowedOrigins = new Set([
+        ...configuredOrigins,
+        'https://linkedin-creations.web.app',
+        'https://linkedin-creations.firebaseapp.com',
+    ]);
     app.enableCors({
-        origin: configService.get('FRONTEND_URL', 'http://localhost:5173'),
+        origin: (requestOrigin, callback) => {
+            if (!requestOrigin || allowedOrigins.has(requestOrigin)) {
+                callback(null, true);
+                return;
+            }
+            callback(new Error('Origin not allowed by CORS'));
+        },
         credentials: true,
     });
     app.useGlobalPipes(new common_1.ValidationPipe({

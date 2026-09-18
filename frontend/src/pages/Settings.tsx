@@ -1,16 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Textarea } from '../components/common/Textarea';
 import { Select } from '../components/common/Select';
 import { useAppStore } from '../store';
 import { authService } from '../services/authService';
+import { settingsService } from '../services/settingsService';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Sparkles, User2, Palette, Cpu } from 'lucide-react';
 import { useToastStore } from '../store/toastStore';
 
 export function Settings() {
-  const { user } = useAppStore();
+  const { user, setUser } = useAppStore();
   const navigate = useNavigate();
   const { addToast } = useToastStore();
 
@@ -21,13 +22,42 @@ export function Settings() {
   const [audience, setAudience] = useState('Product Managers');
   const [length, setLength] = useState('Medium');
 
+  useEffect(() => {
+    void settingsService.get().then((settings) => {
+      setName(settings.name);
+      setHeadline(settings.headline || '');
+      setBio(settings.bio || '');
+      setTone(settings.preferences?.defaultTone || 'Professional');
+      setAudience(settings.preferences?.defaultAudience || 'Product Managers');
+      setLength(settings.preferences?.defaultLength || 'Medium');
+    }).catch(() => {
+      addToast('error', 'Unable to load settings');
+    });
+  }, [addToast]);
+
   const handleLogout = () => {
     authService.logout();
     navigate('/login');
   };
 
-  const handleSave = () => {
-    addToast('success', 'Settings saved successfully');
+  const handleSave = async () => {
+    try {
+      const updatedUser = await settingsService.update({
+        name,
+        headline,
+        bio,
+        preferences: {
+          defaultTone: tone,
+          defaultAudience: audience,
+          defaultLength: length,
+        },
+      });
+      setUser(updatedUser);
+      localStorage.setItem('linkedin_agent_user', JSON.stringify(updatedUser));
+      addToast('success', 'Settings saved successfully');
+    } catch {
+      addToast('error', 'Unable to save settings');
+    }
   };
 
   if (!user) return null;

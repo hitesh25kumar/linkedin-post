@@ -38,14 +38,14 @@ export function PostResult() {
     Published: 'success', Approved: 'info', Draft: 'warning',
   };
 
-  const handleSaveDraft = () => {
-    updatePost(post.id, { status: 'Draft' });
+  const handleSaveDraft = async () => {
+    await updatePost(post.id, { status: 'Draft' });
     addToast('success', 'Post saved to drafts');
     navigate('/drafts');
   };
 
-  const handleApprove = () => {
-    updatePost(post.id, { status: 'Approved' });
+  const handleApprove = async () => {
+    await updatePost(post.id, { status: 'Approved' });
     addToast('success', 'Post approved and saved');
     navigate('/posts');
   };
@@ -56,26 +56,26 @@ export function PostResult() {
     addToast('success', 'Copied to clipboard');
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this post?')) {
-      deletePost(post.id);
+      await deletePost(post.id);
       addToast('success', 'Post deleted');
       navigate('/posts');
     }
   };
 
-  const handleSaveEdit = () => {
-    updatePost(post.id, { content: editContent, hashtags: editHashtags });
+  const handleSaveEdit = async () => {
+    await updatePost(post.id, { content: editContent, hashtags: editHashtags });
     setIsEditing(false);
     addToast('success', 'Changes saved');
   };
 
-  const handleRegenerate = (reason: string) => {
+  const handleRegenerate = async (reason: string) => {
     setIsRegenerating(true);
     addToast('info', `Regenerating: ${reason}...`);
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsRegenerating(false);
-      updatePost(post.id, { content: post.content + `\n\n✦ Refined for: ${reason}` });
+      await updatePost(post.id, { content: post.content + `\n\nRefined for: ${reason}` });
       addToast('success', 'Post regenerated');
     }, 2000);
   };

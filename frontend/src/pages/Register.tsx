@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/authService';
-import { useAppStore } from '../store';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { useToastStore } from '../store/toastStore';
@@ -12,7 +11,6 @@ export function Register() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { loadInitialData } = useAppStore();
   const { addToast } = useToastStore();
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -23,9 +21,7 @@ export function Register() {
     }
     setIsLoading(true);
     try {
-      // Mocking registration by just logging in
-      await authService.login(email, password);
-      loadInitialData();
+      await authService.register(name, email, password);
       addToast('success', 'Account created successfully');
       navigate('/dashboard');
     } catch {
